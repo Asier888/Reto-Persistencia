@@ -134,4 +134,26 @@ except Exception as e:
     print(f"Error al consultar: {e}")
 
 print("Cerrando conexión...")
+
+# --- AGREGACIÓN 2: Máxima velocidad de viento por día ---
+print("\n--- Máxima velocidad de viento por día (últimos 7 días) ---")
+
+flux_max_viento = (
+    f'from(bucket: "{bucket}") '
+    f'|> range(start: -7d) '
+    f'|> filter(fn: (r) => r["_measurement"] == "mediciones_turbina") '
+    f'|> filter(fn: (r) => r["_field"] == "Wind Speed (m/s)") '
+    f'|> aggregateWindow(every: 1d, fn: max, createEmpty: false)'
+)
+
+try:
+    result2 = query_api.query(org=org, query=flux_max_viento)
+    for table in result2:
+        for record in table.records:
+            dia = record.get_time().strftime('%Y-%m-%d')
+            valor = record.get_value()
+            print(f"Día: {dia} | Velocidad máx: {valor:.2f} m/s")
+except Exception as e:
+    print(f"Error en agregación 2: {e}")
+
 client.close()
